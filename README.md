@@ -3,13 +3,13 @@ JsMeshLib
 
 Javascript mesh library by Erik de Bruijn <erik@ultimaker.com>.
 
-== Purpose ==
+=== Purpose ===
 This program can convert large ASCII STL files into binary meshes, which in turn can be compressed before they are uploaded.
 
-== Current state ==
+=== Current state ===
 To start with it only supports the STL file format. Compression is TBD.
 
-== TODOs ==
+=== TODOs ===
  - Create example page with using HTML5 API
  - example: drag-n-drop area for files
  - Include Ultimaker's STL importer lib
@@ -19,6 +19,6 @@ To start with it only supports the STL file format. Compression is TBD.
  - Possibly support other types of Meshes
  - Simplify meshes if lossy is accepted
 
-== DONE ==
+=== DONE ===
  - Setup initial project stucture and github repo
  - Setup code stubs
