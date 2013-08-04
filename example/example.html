@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Jumbotron Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+
+    <!-- jsMeshLib -->
+    <script type="text/javascript" src="../JsMeshLib.js"></script>
+
+    <script type="text/javascript" src="js/example1.js"></script>
+
+    <!-- Custom styles for this template -->
+    <link href="jumbotron.css" rel="stylesheet">
+    <style type="text/css">
+    .greyedOut{color: #999;}
+    .greyBg{
+      background-color: #eee;
+      border-radius: 6px;
+      }</style>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">jsMeshLib: Examples</a>
+        <div class="nav-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Examples <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">1: STL Compression</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">2: Example 2 (TBD)</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+
+      <!-- Main jumbotron for a primary marketing message or call to action -->
+      <div class="jumbotron">
+        <h1>Client side STL compression</h1>
+        <p>This example shows how compression on the client side can help speed up transfers by an order of magnitude (e.g. in the case of ASCII STL files.</p>
+        <p><a class="btn btn-primary btn-large">Click to start uploading &raquo;</a></p>
+      </div>
+
+      <div class="body-content">
+
+        <!-- Example row of columns -->
+        <div class="row">
+          <div class="col-lg-4 greyBg">
+            <h2>Step 1: Select a file</h2>
+            <p>Select a file or drop it onto this area.</p>
+            <input type="file" id="fileInput" />
+            <fieldset id="fileInfo">
+              <legend>File details</legend>
+              <p>File name: <span id="fName" class="greyedOut">(unknown)</span></p>
+              <p>File size: <span id="fSize" class="greyedOut">(unknown)</span></p>
+              <p>File type: <span id="fType" class="greyedOut">(unknown)</span></p>
+            </fieldset>
+          </div>
+          <div class="col-lg-4">
+            <h2>Step 2: Choose compression</h2>
+            <p>Choose which compression you want.</p>
+            <p><input name="comp" type="radio" id="noComp" checked /> <label for="noComp">No compression</label></p>
+            <p><input name="comp" type="radio" id="noComp" /> <label for="noComp">Convert to binary (if applicable)</label></p>
+            <p><input name="comp" type="radio" id="noComp" /> <label for="noComp">Convert and Zip</label></p>
+            <p><a class="btn btn-default" href="#">View details &raquo;</a></p>
+         </div>
+          <div class="col-lg-4">
+            <h2>Step 3: Evaluate the difference</h2>
+            <p class="greyedOut">Finish step 2 first...</p>
+          </div>
+        </div>
+
+        <hr>
+
+        <footer>
+          <p>&copy; Erik de Bruijn - Ultimaker 2013</p>
+        </footer>
+      </div>
+
+    </div> <!-- /container -->
+
+    <script src="../assets/js/jquery.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+  </body>
+</html>
