@@ -6,14 +6,14 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Jumbotron Template for Bootstrap</title>
+    <title>JsMeshLib</title>
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
     <!-- jsMeshLib -->
     <script type="text/javascript" src="../JsMeshLib.js"></script>
-
     <script type="text/javascript" src="js/example1.js"></script>
 
     <!-- Custom styles for this template -->
@@ -24,6 +24,289 @@
       background-color: #eee;
       border-radius: 6px;
       }</style>
+      <script type="javascript/worker" id="fileProcessingWorker">
+
+
+
+self.onmessage = function(e) {
+
+
+  // var vertices = [];
+  var binString = '';
+  var blobData = [];
+  var blobDataBody = [];
+  var vertexCount = 0;
+  postMessage("process start...");
+  var time_start = new Date().getTime();
+
+    postMessage("typeof e.data = "+ typeof e.data);
+    if(typeof e.data === 'object') {
+// 1e keer: count vertices
+
+    var lineStr = '';
+    chunkSize = 1;
+    for(idx = 0 ; idx < e.data.byteLength ; idx++)
+    {
+      myChars = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+chunkSize)));
+      if((myChars.indexOf("\n") != -1) || (myChars.indexOf("\r") != -1)) {
+          // postMessage('Line: '+lineStr);
+          pattern = /vertex/g;
+          while ( ( result = pattern.exec(lineStr) ) != null ) {
+              vertexCount++;
+          }
+          lineStr = '';
+        }
+        lineStr += myChars;
+    }
+    postMessage("Vertices: "+vertexCount);
+
+    // Figure out how large the final ArrayBuffer should be
+    faceCount = Math.floor(vertexCount / 3);
+    var arrayBufferSize = 80; // header
+    arrayBufferSize += 4; // numfaces count
+    arrayBufferSize += ((4*12)+2)*faceCount; // numfaces
+
+    postMessage('ArrayBuffer size should be = '+arrayBufferSize+' bytes');
+
+    // Create ArrayBuffer:
+    var buffer = new ArrayBuffer(arrayBufferSize);
+
+    // Set the header to 80 times the 'A' char
+    var header = new Uint8Array(buffer);
+    for(i=0;i<80;i++)
+      header[i]=0x20;
+
+    // Add the facecount:
+    var vc = new Uint32Array(buffer,80);
+    vc[0] = faceCount;
+
+
+
+
+    // Loop
+      //var coords = new Float32Array(buffer, 84+50*faceIndex);
+      //vertIndex = 0,1,2
+    // end loop
+
+    var faceIndex = 0;
+    var vertIndex = 0;
+    var tmpBuffer = new ArrayBuffer(48);
+    var floatArr1 = new Float32Array(tmpBuffer, 0);
+    for(idx = 0 ; idx < e.data.byteLength ; idx++)
+    {
+      myChar = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+1)));
+
+      // postMessage("char: "+myChar);
+
+      if(myChar == "\n" || myChar == "\r" ) {
+        // postMessage('Line: '+lineStr);
+        pattern = /vertex +([\d|\.|\+|\-|e]+) ([\d|\.|\+|\-|e]+) ([\d|\.|\+|\-|e]+)/g;
+        while ( ( result = pattern.exec(lineStr) ) != null ) {
+            floatArr1[3+3*vertIndex] = result[1];
+            floatArr1[4+3*vertIndex] = result[2];
+            floatArr1[5+3*vertIndex] = result[3];
+            vertIndex++;
+            if(vertIndex == 3) {
+              vertIndex = 0;
+              // copy data from tmpBuffer to buffer
+              var ui8vTmp = new Uint8Array(tmpBuffer);
+              var ui8v = new Uint8Array(buffer,84+50*faceIndex);
+              for(i=0;i<48;i++){
+                ui8v[i] = ui8vTmp[i];
+              }
+              faceIndex++;
+            }
+        }
+        lineStr = '';
+      }//.toString()
+      lineStr += myChar;
+    }
+
+    var duration = new Date().getTime() - time_start;
+    postMessage("process finished...\n"+'Processed in: ' + duration + 'ms');
+
+
+    var arr = new Array();
+    arr.push(buffer);
+    blob = new Blob(arr,{type: "application/sla"});
+    postMessage({binaryDone:true,fileBlob:blob});
+
+
+    return;
+
+/*
+UINT8[80] – Header
+UINT32 – Number of triangles
+
+foreach triangle
+REAL32[3] – Normal vector
+REAL32[3] – Vertex 1
+REAL32[3] – Vertex 2
+REAL32[3] – Vertex 3
+UINT16 – Attribute byte count
+end*/
+
+      header = e.data.slice(0,5);
+      // var lines = String.fromCharCode.apply(null, new Uint8Array(e.data)).split(/[\n\r]/);
+      var lineStr = '';
+      postMessage("data size: " + e.data.byteLength);
+      
+      header = new Uint8Array(80);
+      for(i=0;i<80;i++)
+        header[i]=65;
+
+      blobData.push(header);
+
+
+
+
+
+
+
+
+
+
+
+
+      // FIXME: This might not be correct.
+      triangleCount = vertCount/3;
+      ar1 = new Uint32Array(1);
+      ar1[0] = triangleCount;
+      blobData.push(ar1);
+      // blobData.push(blobDataBody);
+      //TODO: try catch block
+      blob = new Blob(blobDataBody,{type: "application/sla"});
+//blobDataBody
+
+
+      // postMessage(vertices);
+      postMessage({binaryDone:true,fileBlob:blob});
+      // postMessage(blobData);
+      postMessage("VertCount: "+vertCount+' trianglecount: ' +triangleCount);
+      // var blob = bb.getBlob("example/binary");
+      // saveAs(blob, "DoubleHelix_attempt.stl");
+
+      // postMessage({data:binString});
+        // var faceCount = vertices.length / 3;
+        // for(var i=0; i<faceCount;i++)
+        // {
+            // geometry.faces.push(face3(i*3, i*3+2, i*3+1));
+      // }
+
+    }
+    if(typeof e.data === 'string') 
+      postMessage(e.data); // Pass through.
+  
+
+
+};
+  </script>
+  <script>
+
+var lastMessageIn;
+
+function loadInlineWorker(selector, callback) {
+  window.URL = window.URL || window.webkitURL || null;
+
+  var script = document.querySelector(selector);
+  if (script.type === 'javascript/worker') {
+    var blob = new Blob([script.textContent]);
+    return new Worker(window.URL.createObjectURL(blob));
+  }
+}
+
+
+var worker = loadInlineWorker('#fileProcessingWorker');
+var fileData;
+
+
+
+worker.addEventListener('message', function(e) {
+  lastMessageIn = e.data;
+  if(typeof e.data === 'object') {
+    o = e.data;
+    // postMessage("HEX: "+arrayBufferToHexString(e.data));
+
+    if(o.binaryDone){
+      console.log('Worker finished the binary!!!! ');
+      window.URL = window.URL || window.webkitURL || null;
+      var a = document.createElement('a');
+      a.href = window.URL.createObjectURL(e.data.fileBlob);
+      a.download = 'DoubleHelix_attempt2.stl';
+      a.click();
+    }
+  }
+
+  console.log('Worker said: ', e.data);
+}, false);
+
+
+worker.postMessage('Hello World'); // Send data to our worker.
+
+function handleFileSelect(evt) {
+  evt.target.disabled = true;
+  console.log("You selected a file...");
+  $('#fName').html('test.stl');
+  if(fileInput.files.length){
+    console.log('yes.',evt.target.files[0]);
+    $('#fName').html(evt.target.files[0].name);
+    $('#fType').html(evt.target.files[0].type);
+    $('#fSize').html(parseInt(evt.target.files[0].size/1024)+' kb');
+    $('#fLast').html(evt.target.files[0].lastModifiedDate);
+  }
+
+  header = evt.target.files[0].slice(0,5);
+  fileData = evt.target.files[0];
+
+  reader = new FileReader();
+  reader.onload = function (evt) {
+    data = evt.target.result;
+    // if(txt.toLowerCase() === 'solid') {
+      // console.log("Seems to be an ASCII STL... we can try to convert this...");
+      // worker.postMessage("hey, worker... give this a try...");
+      // reader2 = new FileReader();
+      // reader2.onload = function (evt) {
+        // data = evt.target.result;
+        // worker.postMessage(data);
+      // }
+      // reader2.readAsArrayBuffer(fileData);
+      worker.postMessage(data);
+    // }
+  }
+  // var solidTest = evt.target.files[0];//.slice(0, 5);
+  reader.readAsArrayBuffer(fileData);
+
+  evt.target.disabled = false;
+}
+  // worker.postMessage(evt.target.files[0]);
+
+$(function() {
+  // Stuff to do as soon as the DOM is ready;
+  var fileInput = document.getElementById("fileInput");
+  fileInput.addEventListener('change', handleFileSelect);
+
+
+
+});
+
+function pad(str ) {
+    return str.length < 2 ? "0" + str : str;
+}
+
+function arrayBufferToHexString(buffer) {
+  // Display the binary output as hex:
+  var hexArray = [].map.call( buffer, function(v) {
+    return pad(v.toString(16));
+  });
+  var out='';
+  for(i = 0; i < hexArray.length; i+=8) { 
+    out += hexArray[i]+hexArray[i+1]+' '+hexArray[i+2]+hexArray[i+3]+' '+hexArray[i+4]+hexArray[i+5]+' '+hexArray[i+6]+hexArray[i+7]+"\n";
+  }
+  return out;  
+}
+
+
+</script>
   </head>
 
   <body>
@@ -75,6 +358,7 @@
               <p>File name: <span id="fName" class="greyedOut">(unknown)</span></p>
               <p>File size: <span id="fSize" class="greyedOut">(unknown)</span></p>
               <p>File type: <span id="fType" class="greyedOut">(unknown)</span></p>
+              <p>File changed: <span id="fLast" class="greyedOut">(unknown)</span></p>
             </fieldset>
           </div>
           <div class="col-lg-4">

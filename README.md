@@ -18,6 +18,7 @@ To start with it only supports the STL file format. Compression is TBD.
  - Create server side tool for receiving a file
  - Possibly support other types of Meshes
  - Simplify meshes if lossy is accepted
+ - All time-consuming processing needs to happen asynchronously, web-workers are probably the only elegant way to go.
 
 === DONE ===
  - Setup initial project stucture and github repo
