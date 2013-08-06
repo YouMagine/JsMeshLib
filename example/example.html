@@ -45,26 +45,40 @@ self.onmessage = function(e) {
 
     var lineStr = '';
     var ui8v1 = new Uint8Array(e.data);
-    for(idx = 0 ; idx < e.data.byteLength ; idx++)
+    var startIndex = 1;
+    var myChars = '';
+    pattern = /vertex/g;
+    var idx = 0;
+    while(idx < e.data.byteLength)
     {
-      myChars = String.fromCharCode(ui8v1[idx]);
-
-      if((idx%500000)==0){ 
-        var progress = +0.4*idx/e.data.byteLength;
-        postMessage({progressEvent:progress,statusText:"Analyzing file..."});
+      readBytes = 5;
+      if((e.data.byteLength - idx) < 5)
+        readBytes = 1;
+      myChars='';
+      while(readBytes-- && idx < e.data.byteLength){
+        myChars += String.fromCharCode(ui8v1[idx]);
+        idx++;
       }
+
+      // if((idx%500000)==0){ 
+        // var progress = 0.4*idx/e.data.byteLength;
+        // postMessage({progressEvent:progress,statusText:"Analyzing file..."});
+      // }
             // myChars = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+chunkSize)));
       if((myChars.indexOf("\n") != -1) || (myChars.indexOf("\r") != -1)) {
-          // postMessage('Line: '+lineStr);
-          pattern = /vertex/g;
           while ( ( result = pattern.exec(lineStr) ) != null ) {
+          // while ( ( result = lineStr.indexOf('vertex',startIndex) ) != -1 ) {
               vertexCount++;
+              // startIndex = result+1;
           }
           lineStr = '';
+          // startIndex=1;
         }
         lineStr += myChars;
     }
     postMessage("Vertices: "+vertexCount);
+    var duration = new Date().getTime() - time_start;
+    postMessage("Counting took: " + duration + 'ms, which is '+parseFloat(vertexCount/(duration/1000))+' verts/s ');
 
     // Figure out how large the final ArrayBuffer should be
     faceCount = Math.floor(vertexCount / 3);
@@ -90,6 +104,7 @@ self.onmessage = function(e) {
       //var coords = new Float32Array(buffer, 84+50*faceIndex);
       //vertIndex = 0,1,2
     // end loop
+  var time_start_converting = new Date().getTime();
 
     var faceIndex = 0;
     var vertIndex = 0;
@@ -139,6 +154,8 @@ self.onmessage = function(e) {
     arr.push(buffer);
     blob = new Blob(arr,{type: "application/sla"});
 
+    var durationConversion = new Date().getTime() - time_start_converting;
+    postMessage("process finished...\n"+'Converting sub-process took: ' + durationConversion + 'ms');
     var duration = new Date().getTime() - time_start;
     postMessage("process finished...\n"+'Processed in: ' + duration + 'ms');
     postMessage({progressEvent:1,statusText: "Finished optimizing in "+ duration + ' ms'});
