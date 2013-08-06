@@ -36,12 +36,11 @@ self.onmessage = function(e) {
   var blobData = [];
   var blobDataBody = [];
   var vertexCount = 0;
-  postMessage("process start...");
   var time_start = new Date().getTime();
+  postMessage("Worker process started...");
 
-    postMessage("typeof e.data = "+ typeof e.data);
-    if(typeof e.data === 'object') {
-// 1e keer: count vertices
+  if(typeof e.data === 'object')
+  {
 
     var lineStr = '';
     var ui8v1 = new Uint8Array(e.data);
@@ -49,15 +48,18 @@ self.onmessage = function(e) {
     var myChars = '';
     pattern = /vertex/g;
     var idx = 0;
+    // First pass through all the data, to count the vertices.
     while(idx < e.data.byteLength)
     {
         myChars = String.fromCharCode(ui8v1[idx++]);
 
       if((myChars == "\n") || (myChars == "\r")) {
+      // if((ui8v1[idx] == 10) || (ui8v1[idx] == 13)) {
           while ( ( result = pattern.exec(lineStr) ) != null ) {
               vertexCount++;
-              if((vertexCount%1500000)==0){ 
-                var progress = 0.4*idx/e.data.byteLength;
+              if((vertexCount%50000)==0){ 
+                postMessage(myChars + " nr:"+ui8v1[idx++]);
+                progress = 0.4*idx/e.data.byteLength;
                 postMessage({progressEvent:progress,statusText:"Analyzing file..."});
               }
           }
@@ -65,6 +67,7 @@ self.onmessage = function(e) {
         }
         lineStr += myChars;
     }
+
     postMessage("Vertices: "+vertexCount);
     var duration = new Date().getTime() - time_start;
     postMessage("Counting took: " + duration + 'ms, which is '+parseFloat(vertexCount/(duration/1000))+' verts/s ');
@@ -93,47 +96,49 @@ self.onmessage = function(e) {
       //var coords = new Float32Array(buffer, 84+50*faceIndex);
       //vertIndex = 0,1,2
     // end loop
-  var time_start_converting = new Date().getTime();
+    var time_start_converting = new Date().getTime();
 
-    var faceIndex = 0;
-    var vertIndex = 0;
+    var faceIndexX50 = 0;
+    var vertIndexX3 = 3;
     var tmpBuffer = new ArrayBuffer(48);
     var floatArr1 = new Float32Array(tmpBuffer, 0);
     var ui8v1 = new Uint8Array(e.data);
+    var ui8vTmp = new Uint8Array(tmpBuffer);
+    var ui8v = new Uint8Array(buffer,84);
+    pattern = /vertex +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+)/g;
     for(idx = 0 ; idx < e.data.byteLength ; idx++)
     {
       // myChar = String.fromCharCode.apply(null, ui8v1[idx]);
       myChar = String.fromCharCode(ui8v1[idx]);
-      if((idx%500000)==0){ 
-        var progress = 0.4+0.6*idx/e.data.byteLength;
-        postMessage({progressEvent:progress,statusText:"Creating optimized file..."});
-      }
 
       // postMessage("char: "+myChar);
 
       if(myChar == "\n" || myChar == "\r" ) {
         // postMessage('Line: '+lineStr);
-        pattern = /vertex +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+)/g;
         while ( ( result = pattern.exec(lineStr) ) != null ) {
-          //should be able to handle: 
+          //should be able to handle all kinds of ASCII STLs
           // vertex   1.075000e+01  1.450000e+00  8.043062e+00
-            floatArr1[3+3*vertIndex] = result[1];//parseFloat(result[1]);
-            floatArr1[4+3*vertIndex] = result[2];//parseFloat(result[2]);
-            floatArr1[5+3*vertIndex] = result[3];//parseFloat(result[3]);
-            vertIndex++;
-            if(vertIndex == 3) {
-              vertIndex = 0;
+            floatArr1[vertIndexX3] = result[1];
+            floatArr1[1+vertIndexX3] = result[2];
+            floatArr1[2+vertIndexX3] = result[3];
+            vertIndexX3+=3;
+            if(vertIndexX3 == 12) {
+              vertIndexX3 = 3;
               // copy data from tmpBuffer to buffer
-              var ui8vTmp = new Uint8Array(tmpBuffer);
-              var ui8v = new Uint8Array(buffer,84+50*faceIndex);
               for(i=0;i<48;i++){
-                ui8v[i] = ui8vTmp[i];
+                ui8v[i+faceIndexX50] = ui8vTmp[i];
               }
-              faceIndex++;
+              // increment the faceIndex by 50
+              faceIndexX50+=50;
+              if((faceIndexX50%500000)==0){
+                progress = 0.4+0.6*idx/e.data.byteLength;
+                postMessage({progressEvent:progress,statusText:"Creating optimized file..."});
+              }
             }
+
         }
         lineStr = '';
-      }//.toString()
+      }
       lineStr += myChar;
     }
 
