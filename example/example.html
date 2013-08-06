@@ -86,9 +86,6 @@ self.onmessage = function(e) {
     var vc = new Uint32Array(buffer,80);
     vc[0] = faceCount;
 
-
-
-
     // Loop
       //var coords = new Float32Array(buffer, 84+50*faceIndex);
       //vertIndex = 0,1,2
@@ -105,18 +102,20 @@ self.onmessage = function(e) {
       myChar = String.fromCharCode(ui8v1[idx]);
       if((idx%500000)==0){ 
         var progress = 0.4+0.6*idx/e.data.byteLength;
-        postMessage({progressEvent:progress,statusText:"Creating optimzed file..."});
+        postMessage({progressEvent:progress,statusText:"Creating optimized file..."});
       }
 
       // postMessage("char: "+myChar);
 
       if(myChar == "\n" || myChar == "\r" ) {
         // postMessage('Line: '+lineStr);
-        pattern = /vertex +([\d|\.|\+|\-|e]+) ([\d|\.|\+|\-|e]+) ([\d|\.|\+|\-|e]+)/g;
+        pattern = /vertex +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+)/g;
         while ( ( result = pattern.exec(lineStr) ) != null ) {
-            floatArr1[3+3*vertIndex] = result[1];
-            floatArr1[4+3*vertIndex] = result[2];
-            floatArr1[5+3*vertIndex] = result[3];
+          //should be able to handle: 
+          // vertex   1.075000e+01  1.450000e+00  8.043062e+00
+            floatArr1[3+3*vertIndex] = result[1];//parseFloat(result[1]);
+            floatArr1[4+3*vertIndex] = result[2];//parseFloat(result[2]);
+            floatArr1[5+3*vertIndex] = result[3];//parseFloat(result[3]);
             vertIndex++;
             if(vertIndex == 3) {
               vertIndex = 0;
