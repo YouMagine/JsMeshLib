@@ -44,10 +44,16 @@ self.onmessage = function(e) {
 // 1e keer: count vertices
 
     var lineStr = '';
-    chunkSize = 1;
+    var ui8v1 = new Uint8Array(e.data);
     for(idx = 0 ; idx < e.data.byteLength ; idx++)
     {
-      myChars = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+chunkSize)));
+      myChars = String.fromCharCode(ui8v1[idx]);
+
+      if((idx%500000)==0){ 
+        var progress = +0.4*idx/e.data.byteLength;
+        postMessage({progressEvent:progress,statusText:"Analyzing file..."});
+      }
+            // myChars = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+chunkSize)));
       if((myChars.indexOf("\n") != -1) || (myChars.indexOf("\r") != -1)) {
           // postMessage('Line: '+lineStr);
           pattern = /vertex/g;
@@ -92,9 +98,11 @@ self.onmessage = function(e) {
     var vertIndex = 0;
     var tmpBuffer = new ArrayBuffer(48);
     var floatArr1 = new Float32Array(tmpBuffer, 0);
+    var ui8v1 = new Uint8Array(e.data);
     for(idx = 0 ; idx < e.data.byteLength ; idx++)
     {
-      myChar = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+1)));
+      // myChar = String.fromCharCode.apply(null, ui8v1[idx]);
+      myChar = String.fromCharCode(ui8v1[idx]);
 
       // postMessage("char: "+myChar);
 
