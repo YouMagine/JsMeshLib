@@ -103,6 +103,10 @@ self.onmessage = function(e) {
     {
       // myChar = String.fromCharCode.apply(null, ui8v1[idx]);
       myChar = String.fromCharCode(ui8v1[idx]);
+      if((idx%500000)==0){ 
+        var progress = 0.4+0.6*idx/e.data.byteLength;
+        postMessage({progressEvent:progress,statusText:"Creating optimzed file..."});
+      }
 
       // postMessage("char: "+myChar);
 
@@ -130,14 +134,16 @@ self.onmessage = function(e) {
       lineStr += myChar;
     }
 
-    var duration = new Date().getTime() - time_start;
-    postMessage("process finished...\n"+'Processed in: ' + duration + 'ms');
 
 
     var arr = new Array();
     arr.push(buffer);
     blob = new Blob(arr,{type: "application/sla"});
-    postMessage({binaryDone:true,fileBlob:blob});
+
+    var duration = new Date().getTime() - time_start;
+    postMessage("process finished...\n"+'Processed in: ' + duration + 'ms');
+    postMessage({progressEvent:1,statusText: "Finished optimizing in "+ duration + ' ms'});
+    postMessage({binaryDone:true,fileBlob:blob,timeTaken:duration});
 
 
     return;
@@ -226,21 +232,32 @@ function loadInlineWorker(selector, callback) {
 
 var worker = loadInlineWorker('#fileProcessingWorker');
 var fileData;
-
+var lastProgress = -1;
 
 
 worker.addEventListener('message', function(e) {
   lastMessageIn = e.data;
   if(typeof e.data === 'object') {
     o = e.data;
+    if(progress = o.progressEvent) {
+      $('#waitForStep2').hide();
+      progressBarPerc(progress*100,o.statusText || '');
+      if(progress == 1) setTimeout(function(){$('#conversionInfo').hide();},4000);
+      return; // no more handing of the message is desired
+    }
     // postMessage("HEX: "+arrayBufferToHexString(e.data));
 
     if(o.binaryDone){
       console.log('Worker finished the binary!!!! ');
+      $('#newFileStats').attr('style','');
+      numKBytes = e.data.fileBlob.size / 1024;
+      $('#newSize').html(parseInt(numKBytes*10)/10 + ' kb');
+      $('#newSizeShrunk').html(parseInt((numKBytes/(fileData.size/1024)*100))+'%');
+      if(o.timeTaken) $('#timeTaken').html(o.timeTaken+' ms');
       window.URL = window.URL || window.webkitURL || null;
       var a = document.createElement('a');
       a.href = window.URL.createObjectURL(e.data.fileBlob);
-      a.download = 'DoubleHelix_attempt2.stl';
+      a.download = fileData.name;
       a.click();
     }
   }
@@ -313,6 +330,17 @@ function arrayBufferToHexString(buffer) {
   return out;  
 }
 
+function progressBarPerc(perc,statusText){
+  $('#conversionProgressDiv').css('visibility','');
+  perc = parseInt(progress*100);
+  $('#conversionProgressStatus').html(statusText);
+  if(perc >= 100)
+    perc = 100;
+      $('#conversionProgressBar').css('width',perc + '%');
+  if(perc == 100)
+    $('#conversionProgressDiv').removeClass('active');
+}
+
 
 </script>
   </head>
@@ -379,7 +407,18 @@ function arrayBufferToHexString(buffer) {
          </div>
           <div class="col-lg-4">
             <h2>Step 3: Evaluate the difference</h2>
-            <p class="greyedOut">Finish step 2 first...</p>
+            <p id="waitForStep2" class="greyedOut">Finish step 2 first...</p>
+            <div id="conversionInfo">
+              <b id="conversionProgressStatus"></b>
+            <div id="conversionProgressDiv" style="visibility:hidden" class="progress progress-striped active">
+              <div id="conversionProgressBar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            </div>
+            <div id="newFileStats" style="visibility:hidden">
+              <p>New file size: <span id="newSize" class="greyedOut">(unknown)</span></p>
+              <p>Relative size: <span id="newSizeShrunk" class="greyedOut">(unknown)</span></p>
+              <p>Processing time: <span id="timeTaken" class="greyedOut">(unknown)</span></p>
+            </div>
           </div>
         </div>
 
