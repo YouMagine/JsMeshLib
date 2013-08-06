@@ -377,7 +377,7 @@ function progressBarPerc(perc,statusText){
       <!-- Main jumbotron for a primary marketing message or call to action -->
       <div class="jumbotron">
         <h1>Client side STL compression</h1>
-        <p>This example shows how compression on the client side can help speed up transfers by an order of magnitude (e.g. in the case of ASCII STL files.</p>
+        <p>This example shows how compression on the client side can help speed up transfers by an order of magnitude (e.g. in the case of ASCII STL files).</p>
         <p><a class="btn btn-primary btn-large">Click to start uploading &raquo;</a></p>
       </div>
 
@@ -400,10 +400,11 @@ function progressBarPerc(perc,statusText){
           <div class="col-lg-4">
             <h2>Step 2: Choose compression</h2>
             <p>Choose which compression you want.</p>
-            <p><input name="comp" type="radio" id="noComp" checked /> <label for="noComp">No compression</label></p>
-            <p><input name="comp" type="radio" id="noComp" /> <label for="noComp">Convert to binary (if applicable)</label></p>
-            <p><input name="comp" type="radio" id="noComp" /> <label for="noComp">Convert and Zip</label></p>
-            <p><a class="btn btn-default" href="#">View details &raquo;</a></p>
+            <p><input name="comp" type="radio" id="compNone" /> <label for="compNone">No compression</label></p>
+            <p><input name="comp" type="radio" id="compConvert" checked /> <label for="compConvert">Convert to binary (if applicable)</label></p>
+            <p><input name="comp" type="radio" id="compConvertZip" /> <label for="compConvertZip">Convert and Zip</label></p>
+            <!--
+            <p><a class="btn btn-default" href="#">View details &raquo;</a></p> -->
          </div>
           <div class="col-lg-4">
             <h2>Step 3: Evaluate the difference</h2>
