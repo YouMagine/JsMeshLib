@@ -51,28 +51,17 @@ self.onmessage = function(e) {
     var idx = 0;
     while(idx < e.data.byteLength)
     {
-      readBytes = 5;
-      if((e.data.byteLength - idx) < 5)
-        readBytes = 1;
-      myChars='';
-      while(readBytes-- && idx < e.data.byteLength){
-        myChars += String.fromCharCode(ui8v1[idx]);
-        idx++;
-      }
+        myChars = String.fromCharCode(ui8v1[idx++]);
 
-      // if((idx%500000)==0){ 
-        // var progress = 0.4*idx/e.data.byteLength;
-        // postMessage({progressEvent:progress,statusText:"Analyzing file..."});
-      // }
-            // myChars = String.fromCharCode.apply(null, new Uint8Array(e.data.slice(idx,idx+chunkSize)));
-      if((myChars.indexOf("\n") != -1) || (myChars.indexOf("\r") != -1)) {
+      if((myChars == "\n") || (myChars == "\r")) {
           while ( ( result = pattern.exec(lineStr) ) != null ) {
-          // while ( ( result = lineStr.indexOf('vertex',startIndex) ) != -1 ) {
               vertexCount++;
-              // startIndex = result+1;
+              if((vertexCount%1500000)==0){ 
+                var progress = 0.4*idx/e.data.byteLength;
+                postMessage({progressEvent:progress,statusText:"Analyzing file..."});
+              }
           }
           lineStr = '';
-          // startIndex=1;
         }
         lineStr += myChars;
     }
