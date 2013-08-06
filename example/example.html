@@ -42,31 +42,29 @@ self.onmessage = function(e) {
   if(typeof e.data === 'object')
   {
 
-    var lineStr = '';
-    var ui8v1 = new Uint8Array(e.data);
-    var startIndex = 1;
-    var myChars = '';
-    pattern = /vertex/g;
-    var idx = 0;
     // First pass through all the data, to count the vertices.
+    var ui8v1 = new Uint8Array(e.data);
+    var idx = 0;
+    // FIXME: scan until first newline to prevent names/info in the header creating incorrect vertex count.
     while(idx < e.data.byteLength)
     {
-        myChars = String.fromCharCode(ui8v1[idx++]);
-
-      if((myChars == "\n") || (myChars == "\r")) {
-      // if((ui8v1[idx] == 10) || (ui8v1[idx] == 13)) {
-          while ( ( result = pattern.exec(lineStr) ) != null ) {
-              vertexCount++;
-              if((vertexCount%50000)==0){ 
-                postMessage(myChars + " nr:"+ui8v1[idx++]);
-                progress = 0.4*idx/e.data.byteLength;
-                postMessage({progressEvent:progress,statusText:"Analyzing file..."});
-              }
+      if(String.fromCharCode(ui8v1[idx++]) == "v") {
+        if(e.data.byteLength - idx > 5) {
+          if(String.fromCharCode(ui8v1[idx++]=='e') &&
+             String.fromCharCode(ui8v1[idx++]=='r') &&
+             String.fromCharCode(ui8v1[idx++]=='t') &&
+             String.fromCharCode(ui8v1[idx++]=='e') &&
+             String.fromCharCode(ui8v1[idx++]=='x')) {
+                vertexCount++;
+                if((vertexCount%200000)==0){
+                  progress = 0.4*idx/e.data.byteLength;
+                  postMessage({progressEvent:progress,statusText:"Analyzing file..."});
+                }
           }
-          lineStr = '';
         }
-        lineStr += myChars;
+      }
     }
+    delete ui8v1;
 
     postMessage("Vertices: "+vertexCount);
     var duration = new Date().getTime() - time_start;
@@ -87,10 +85,12 @@ self.onmessage = function(e) {
     var header = new Uint8Array(buffer);
     for(i=0;i<80;i++)
       header[i]=0x20;
+    delete header;
 
     // Add the facecount:
     var vc = new Uint32Array(buffer,80);
     vc[0] = faceCount;
+    delete vc;
 
     // Loop
       //var coords = new Float32Array(buffer, 84+50*faceIndex);
@@ -101,15 +101,15 @@ self.onmessage = function(e) {
     var faceIndexX50 = 0;
     var vertIndexX3 = 3;
     var tmpBuffer = new ArrayBuffer(48);
-    var floatArr1 = new Float32Array(tmpBuffer, 0);
-    var ui8v1 = new Uint8Array(e.data);
+    var f32v = new Float32Array(tmpBuffer, 0);
+    var ui8vIn = new Uint8Array(e.data);
     var ui8vTmp = new Uint8Array(tmpBuffer);
-    var ui8v = new Uint8Array(buffer,84);
+    var ui8vOut = new Uint8Array(buffer,84);
     pattern = /vertex +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+)/g;
     for(idx = 0 ; idx < e.data.byteLength ; idx++)
     {
-      // myChar = String.fromCharCode.apply(null, ui8v1[idx]);
-      myChar = String.fromCharCode(ui8v1[idx]);
+      // myChar = String.fromCharCode.apply(null, ui8vOutIn[idx]);
+      myChar = String.fromCharCode(ui8vIn[idx]);
 
       // postMessage("char: "+myChar);
 
@@ -118,19 +118,19 @@ self.onmessage = function(e) {
         while ( ( result = pattern.exec(lineStr) ) != null ) {
           //should be able to handle all kinds of ASCII STLs
           // vertex   1.075000e+01  1.450000e+00  8.043062e+00
-            floatArr1[vertIndexX3] = result[1];
-            floatArr1[1+vertIndexX3] = result[2];
-            floatArr1[2+vertIndexX3] = result[3];
+            f32v[vertIndexX3] = result[1];
+            f32v[1+vertIndexX3] = result[2];
+            f32v[2+vertIndexX3] = result[3];
             vertIndexX3+=3;
             if(vertIndexX3 == 12) {
               vertIndexX3 = 3;
               // copy data from tmpBuffer to buffer
               for(i=0;i<48;i++){
-                ui8v[i+faceIndexX50] = ui8vTmp[i];
+                ui8vOut[i+faceIndexX50] = ui8vTmp[i];
               }
               // increment the faceIndex by 50
               faceIndexX50+=50;
-              if((faceIndexX50%500000)==0){
+              if((faceIndexX50%2000000)==0){
                 progress = 0.4+0.6*idx/e.data.byteLength;
                 postMessage({progressEvent:progress,statusText:"Creating optimized file..."});
               }
@@ -143,7 +143,7 @@ self.onmessage = function(e) {
     }
 
 
-
+    // FIXME: This is probably taking lots of memory... can be improved.
     var arr = new Array();
     arr.push(buffer);
     blob = new Blob(arr,{type: "application/sla"});
