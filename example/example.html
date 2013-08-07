@@ -54,15 +54,12 @@ self.onmessage = function(e) {
     postMessage("Seek to newline: first newline at index "+idx);
     while(idx < e.data.byteLength)
     {
-      if(String.fromCharCode(ui8v1[idx++]) == "v") {
+      // "v".charCodeAt(0) = 118, e->101, r->114, t->116, x->120
+      if(ui8v1[idx++] == 118) { 
         if(e.data.byteLength - idx > 5) {
-          if(String.fromCharCode(ui8v1[idx++]=='e') &&
-             String.fromCharCode(ui8v1[idx++]=='r') &&
-             String.fromCharCode(ui8v1[idx++]=='t') &&
-             String.fromCharCode(ui8v1[idx++]=='e') &&
-             String.fromCharCode(ui8v1[idx++]=='x')) {
+          if(ui8v1[idx++] == 101 && ui8v1[idx++] == 114 && ui8v1[idx++] == 116 && ui8v1[idx++] == 101 && ui8v1[idx++] == 120) {
                 vertexCount++;
-                if((vertexCount%200000)==0){
+                if((vertexCount%200000) == 0) {
                   progress = 0.4*idx/e.data.byteLength;
                   postMessage({progressEvent:progress,statusText:"Analyzing file..."});
                 }
