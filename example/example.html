@@ -107,6 +107,7 @@ self.onmessage = function(e) {
     var ui8vIn = new Uint8Array(e.data);
     var ui8vTmp = new Uint8Array(tmpBuffer);
     var ui8vOut = new Uint8Array(buffer,84);
+    var lineStr = '';
     pattern = /vertex +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+) +([\d|\.|\+|\-|e]+)/g;
     for(idx = 0 ; idx < e.data.byteLength ; idx++)
     {
@@ -158,70 +159,9 @@ self.onmessage = function(e) {
     postMessage({binaryDone:true,fileBlob:blob,timeTaken:duration});
 
 
-    return;
-
-/*
-UINT8[80] – Header
-UINT32 – Number of triangles
-
-foreach triangle
-REAL32[3] – Normal vector
-REAL32[3] – Vertex 1
-REAL32[3] – Vertex 2
-REAL32[3] – Vertex 3
-UINT16 – Attribute byte count
-end*/
-
-      header = e.data.slice(0,5);
-      // var lines = String.fromCharCode.apply(null, new Uint8Array(e.data)).split(/[\n\r]/);
-      var lineStr = '';
-      postMessage("data size: " + e.data.byteLength);
-      
-      header = new Uint8Array(80);
-      for(i=0;i<80;i++)
-        header[i]=65;
-
-      blobData.push(header);
-
-
-
-
-
-
-
-
-
-
-
-
-      // FIXME: This might not be correct.
-      triangleCount = vertCount/3;
-      ar1 = new Uint32Array(1);
-      ar1[0] = triangleCount;
-      blobData.push(ar1);
-      // blobData.push(blobDataBody);
-      //TODO: try catch block
-      blob = new Blob(blobDataBody,{type: "application/sla"});
-//blobDataBody
-
-
-      // postMessage(vertices);
-      postMessage({binaryDone:true,fileBlob:blob});
-      // postMessage(blobData);
-      postMessage("VertCount: "+vertCount+' trianglecount: ' +triangleCount);
-      // var blob = bb.getBlob("example/binary");
-      // saveAs(blob, "DoubleHelix_attempt.stl");
-
-      // postMessage({data:binString});
-        // var faceCount = vertices.length / 3;
-        // for(var i=0; i<faceCount;i++)
-        // {
-            // geometry.faces.push(face3(i*3, i*3+2, i*3+1));
-      // }
-
-    }
-    if(typeof e.data === 'string') 
-      postMessage(e.data); // Pass through.
+  }
+  if(typeof e.data === 'string') 
+    postMessage(e.data); // Pass through.
   
 
 
@@ -336,7 +276,6 @@ function handleFileSelect(evt) {
 
   evt.target.disabled = false;
 }
-  // worker.postMessage(evt.target.files[0]);
 
 $(function() {
   // Stuff to do as soon as the DOM is ready;
