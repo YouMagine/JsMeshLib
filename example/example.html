@@ -75,6 +75,10 @@ self.onmessage = function(e) {
     postMessage("Vertices: "+vertexCount);
     var duration = new Date().getTime() - time_start;
     postMessage("Counting took: " + duration + 'ms, which is '+parseFloat(vertexCount/(duration/1000))+' verts/s ');
+    if(vertexCount == 0){
+      postMessage({exception:1,exceptionTxt:"No vertices found. Probably a binary. Worker stops processing now."});
+      return;
+    }
 
     // Figure out how large the final ArrayBuffer should be
     faceCount = Math.floor(vertexCount / 3);
@@ -195,6 +199,13 @@ worker.addEventListener('message', function(e) {
   lastMessageIn = e.data;
   if(typeof e.data === 'object') {
     o = e.data;
+    if(o.exception && o.exceptionTxt) {
+      console.log("Exception "+o.exception+": "+o.exceptionTxt);
+    }
+    if(o.exception && o.exception == 1) {
+      console.log("Aborting...");
+      return;
+    }
     if(progress = o.progressEvent) {
       $('#waitForStep2').hide();
       progressBarPerc(progress*100,o.statusText || '');
