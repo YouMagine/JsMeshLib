@@ -47,7 +47,11 @@ self.onmessage = function(e) {
     // First pass through all the data, to count the vertices.
     var ui8v1 = new Uint8Array(e.data);
     var idx = 0;
-    // FIXME: scan until first newline to prevent names/info in the header creating incorrect vertex count.
+    // scan until first newline to prevent names/info in the header creating incorrect vertex count.
+    while(idx < e.data.byteLength)
+      if(ui8v1[idx++] == 10) // charcode 11 = newline
+        break;
+    postMessage("Seek to newline: first newline at index "+idx);
     while(idx < e.data.byteLength)
     {
       if(String.fromCharCode(ui8v1[idx++]) == "v") {
