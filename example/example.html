@@ -15,6 +15,8 @@
     <!-- jsMeshLib -->
     <script type="text/javascript" src="../JsMeshLib.js"></script>
     <script type="text/javascript" src="js/example1.js"></script>
+    <!-- Zip.js from http://gildas-lormeau.github.io/zip.js/index.html -->
+    <script type="text/javascript" src="../lib/zip.js/WebContent/zip.js"></script>
 
     <!-- Custom styles for this template -->
     <link href="jumbotron.css" rel="stylesheet">
@@ -264,17 +266,38 @@ worker.addEventListener('message', function(e) {
       $('#newSize').html(parseInt(numKBytes*10)/10 + ' kb');
       $('#newSizeShrunk').html(parseInt((numKBytes/(fileData.size/1024)*100))+'%');
       if(o.timeTaken) $('#timeTaken').html(o.timeTaken+' ms');
-      window.URL = window.URL || window.webkitURL || null;
-      var a = document.createElement('a');
-      a.href = window.URL.createObjectURL(e.data.fileBlob);
-      a.download = fileData.name;
-      a.click();
+      window.tmpFileName = fileData.name;
+
+      if($("#compConvertZip").prop("checked"))
+      {
+        progressBarPerc(progress*100, 'Creating zip file...');
+        zipBlob(window.tmpFileName, e.data.fileBlob, function(zippedBlob) {
+          // unzip the first file from zipped data stored in zippedBlob
+          var a = document.createElement('a');
+          a.href = window.URL.createObjectURL(zippedBlob);
+          a.download = window.tmpFileName+'.zip';
+          a.click();
+          progressBarPerc(100, 'Creating zip file... done.');
+          numKBytes = zippedBlob.size / 1024;
+          $('#newSize').html(parseInt(numKBytes*10)/10 + ' kb');
+          $('#newSizeShrunk').html(parseInt((numKBytes/(fileData.size/1024)*100))+'%');
+          // unzipBlob(zippedBlob, function(unzippedBlob) {
+            // provide the uncompressed Blob to the user
+          // });
+        });
+      } else if($("#compConvert").prop("checked")) {
+          var a = document.createElement('a');
+          a.href = window.URL.createObjectURL(e.data.fileBlob);
+          a.download = window.tmpFileName;
+          a.click();
+      }
     }
   }
 
   console.log('Worker said: ', e.data);
 }, false);
 
+window.URL = window.URL || window.webkitURL || null;
 
 worker.postMessage('Hello World'); // Send data to our worker.
 
@@ -351,6 +374,23 @@ function progressBarPerc(perc,statusText){
     $('#conversionProgressDiv').removeClass('active');
 }
 
+//zip.createWriter(new zip.BlobWriter(),function(writer) {...} );
+
+function zipBlob(filename, blob, callback) {
+  zip.workerScriptsPath = '../lib/zip.js/WebContent/';
+  // zip.useWebWorkers = false;
+  // use a zip.BlobWriter object to write zipped data into a Blob object
+  zip.createWriter(new zip.BlobWriter("application/zip"), function(zipWriter) {
+    // use a BlobReader object to read the data stored into blob variable
+    zipWriter.add(filename, new zip.BlobReader(blob), function() {
+      // close the writer and calls callback function
+      zipWriter.close(callback);
+    });
+  }, onerror);
+}
+
+
+
 
 </script>
   </head>
@@ -395,8 +435,16 @@ function progressBarPerc(perc,statusText){
 
         <!-- Example row of columns -->
         <div class="row">
+          <div class="col-lg-4 ">
+            <h2>Step 1: Choose compression</h2>
+            <p>Choose which compression you want.</p>
+            <p><input name="comp" type="radio" id="compConvert" /> <label for="compConvert">Convert to binary (if applicable)</label></p>
+            <p><input name="comp" type="radio" id="compConvertZip" checked /> <label for="compConvertZip">Convert and Zip</label></p>
+            <!--
+            <p><a class="btn btn-default" href="#">View details &raquo;</a></p> -->
+         </div>
           <div class="col-lg-4 greyBg">
-            <h2>Step 1: Select a file</h2>
+            <h2>Step 2: Select a file</h2>
             <p>Select a file or drop it onto this area.</p>
             <input type="file" id="fileInput" />
             <fieldset id="fileInfo">
@@ -407,16 +455,7 @@ function progressBarPerc(perc,statusText){
               <p>File changed: <span id="fLast" class="greyedOut">(unknown)</span></p>
             </fieldset>
           </div>
-          <div class="col-lg-4">
-            <h2>Step 2: Choose compression</h2>
-            <p>Choose which compression you want.</p>
-            <p><input name="comp" type="radio" id="compNone" /> <label for="compNone">No compression</label></p>
-            <p><input name="comp" type="radio" id="compConvert" checked /> <label for="compConvert">Convert to binary (if applicable)</label></p>
-            <p><input name="comp" type="radio" id="compConvertZip" /> <label for="compConvertZip">Convert and Zip</label></p>
-            <!--
-            <p><a class="btn btn-default" href="#">View details &raquo;</a></p> -->
-         </div>
-          <div class="col-lg-4">
+          <div class="col-lg-4 grey">
             <h2>Step 3: Evaluate the difference</h2>
             <p id="waitForStep2" class="greyedOut">Finish step 2 first...</p>
             <div id="conversionInfo">
